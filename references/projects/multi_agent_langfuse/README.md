@@ -47,6 +47,7 @@ This project is useful when you want a traceable multi-agent workflow where each
 - `docs/ARCHITECTURE.md`: system design and flow
 - `docs/LANGFUSE_SETUP.md`: local Langfuse setup and troubleshooting
 - `deploy/langfuse/docker-compose.yml`: local self-hosted Langfuse stack
+- `deploy/langfuse/podman-compose.yml`: Podman-compatible compose stack
 - `deploy/langfuse/.env.example`: stack env template
 - `deploy/langfuse/README.md`: deployment commands
 - `src/config.py`: environment/config handling
@@ -86,6 +87,8 @@ This project is useful when you want a traceable multi-agent workflow where each
 
 - `references/projects/multi_agent_langfuse/deploy/langfuse/docker-compose.yml`
   - Local Langfuse stack definition (containers/services).
+- `references/projects/multi_agent_langfuse/deploy/langfuse/podman-compose.yml`
+  - Podman-compatible compose definition for the same Langfuse stack.
 - `references/projects/multi_agent_langfuse/deploy/langfuse/.env.example`
   - Example env variables required by the local Langfuse stack.
 - `references/projects/multi_agent_langfuse/deploy/langfuse/README.md`
@@ -160,6 +163,14 @@ Copy-Item references\projects\multi_agent_langfuse\.env.example .env
 cd references\projects\multi_agent_langfuse\deploy\langfuse
 Copy-Item .env.example .env
 docker compose up -d
+```
+
+Podman users (tested target: `5.7.1`):
+
+```powershell
+cd references\projects\multi_agent_langfuse\deploy\langfuse
+Copy-Item .env.example .env
+podman compose -f podman-compose.yml up -d
 ```
 
 Open `http://localhost:3000`, create a project, and generate API keys.

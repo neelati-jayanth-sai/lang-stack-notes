@@ -1,6 +1,12 @@
-# Local Langfuse Docker Compose
+# Local Langfuse Compose (Docker + Podman)
 
 This folder contains a complete local Langfuse stack for development.
+
+## Podman Version Note
+
+- Verified target runtime: **Podman 5.7.1**
+- Use `podman compose -f podman-compose.yml ...` with this project.
+- The provided `podman-compose.yml` intentionally uses Podman-friendly `depends_on` format (without Docker-only condition blocks).
 
 ## Services Included
 
@@ -40,11 +46,32 @@ $next = [guid]::NewGuid().ToString('N') + [guid]::NewGuid().ToString('N')
 docker compose up -d
 ```
 
+### Start with Podman (recommended file for Podman)
+
+```powershell
+cd references\projects\multi_agent_langfuse\deploy\langfuse
+Copy-Item .env.example .env
+podman compose -f podman-compose.yml up -d
+```
+
+If you use `podman-compose` (python package), use:
+
+```powershell
+podman-compose -f podman-compose.yml up -d
+```
+
 ## Verify
 
 ```powershell
 docker compose ps
 docker compose logs -f langfuse-web
+```
+
+For Podman:
+
+```powershell
+podman compose -f podman-compose.yml ps
+podman compose -f podman-compose.yml logs -f langfuse-web
 ```
 
 Open `http://localhost:3000`, create a project, and generate API keys.
@@ -65,10 +92,22 @@ LANGFUSE_HOST=http://localhost:3000
 docker compose down
 ```
 
+For Podman:
+
+```powershell
+podman compose -f podman-compose.yml down
+```
+
 To remove persisted data too:
 
 ```powershell
 docker compose down -v
+```
+
+For Podman:
+
+```powershell
+podman compose -f podman-compose.yml down -v
 ```
 
 ## If You Already Hit the ZooKeeper Error
