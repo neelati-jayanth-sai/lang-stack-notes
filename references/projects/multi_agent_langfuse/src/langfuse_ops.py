@@ -53,6 +53,7 @@ def seed_dataset(dataset_name: str) -> None:
 
 
 def create_or_update_prompt(prompt_name: str) -> None:
+    cfg = load_config()
     client = get_client()
     try:
         client.create_prompt(
@@ -68,7 +69,7 @@ def create_or_update_prompt(prompt_name: str) -> None:
                 },
                 {"role": "user", "content": "Task: {{task}}\\n\\nDraft: {{draft}}"},
             ],
-            config={"model": "llama-3.1-8b-instant", "temperature": 0},
+            config={"model": cfg.llm_model, "temperature": 0},
         )
         print(f"Prompt created/updated: {prompt_name}")
     except Exception as exc:
@@ -99,7 +100,7 @@ def create_default_prompts() -> None:
                 tags=["poc", "multi-agent", agent_key],
                 commit_message=f"Create default prompt for {agent_key}",
                 prompt=fallback,
-                config={"model": cfg.groq_model, "temperature": 0},
+                config={"model": cfg.llm_model, "temperature": 0},
             )
             print(f"Prompt created/updated: {prompt_name} ({agent_key})")
         except Exception as exc:

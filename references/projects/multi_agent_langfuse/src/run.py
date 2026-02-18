@@ -145,7 +145,7 @@ def execute_workflow(
                 as_type="generation",
                 input={"task": task},
                 output=final_answer,
-                model=cfg.groq_model,
+                model=cfg.llm_model,
                 metadata={"session_id": session_id, "user_id": user_id, "tags": tags},
             ):
                 pass

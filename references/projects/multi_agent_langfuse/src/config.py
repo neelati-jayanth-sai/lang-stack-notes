@@ -7,7 +7,9 @@ from dotenv import load_dotenv
 
 @dataclass
 class AppConfig:
-    groq_model: str
+    llm_model: str
+    llm_api_key: str
+    llm_endpoint_url: str
     max_steps: int
     langfuse_public_key: str
     langfuse_secret_key: str
@@ -37,7 +39,9 @@ def load_config() -> AppConfig:
     load_dotenv()
 
     return AppConfig(
-        groq_model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
+        llm_model=os.getenv("LLM_MODEL", os.getenv("OPENAI_MODEL", os.getenv("GROQ_MODEL", "gpt-4o-mini"))),
+        llm_api_key=os.getenv("LLM_API_KEY", os.getenv("OPENAI_API_KEY", os.getenv("GROQ_API_KEY", ""))),
+        llm_endpoint_url=os.getenv("LLM_ENDPOINT_URL", os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")),
         max_steps=int(os.getenv("MAX_STEPS", "12")),
         langfuse_public_key=os.getenv("LANGFUSE_PUBLIC_KEY", ""),
         langfuse_secret_key=os.getenv("LANGFUSE_SECRET_KEY", ""),

@@ -4,7 +4,7 @@ This is a detailed reference project showing how to build and trace a **multi-ag
 - LangChain components
 - LangGraph orchestration
 - Langfuse observability/tracing
-- Groq-hosted chat models
+- OpenAI-compatible chat models via endpoint URL
 
 ## Langfuse Features Used In This POC
 
@@ -31,6 +31,17 @@ This is a detailed reference project showing how to build and trace a **multi-ag
 - Guarding workflow with retry/step limits
 - Adding end-to-end traces with Langfuse callback handlers
 
+## Use Cases
+
+This project is useful when you want a traceable multi-agent workflow where each agent has a clear responsibility and all steps are observable in Langfuse.
+
+- **Market/industry brief generation**: research facts, analyze them, write a draft, and run quality review before final output.
+- **Internal assistant orchestration pattern**: use supervisor routing to coordinate specialized agents instead of a single monolithic prompt.
+- **Prompt management experiments**: keep prompts in Langfuse and switch prompt variants by label (`latest`, `production`) without code changes.
+- **LLM provider portability**: run against OpenAI-compatible endpoints by changing `.env` (`LLM_MODEL`, `LLM_ENDPOINT_URL`, `LLM_API_KEY`).
+- **Observability and evaluation demos**: capture traces, sessions, metadata, tags, events, and scores for each run.
+- **Dataset bootstrapping for evals**: store workflow inputs as dataset items and later evaluate prompt/agent improvements.
+
 ## Project Layout
 
 - `docs/ARCHITECTURE.md`: system design and flow
@@ -48,6 +59,87 @@ This is a detailed reference project showing how to build and trace a **multi-ag
 - `examples/run_demo.ps1`: example execution script
 - `examples/run_multiple.ps1`: batch run helper
 - `examples/langfuse_feature_demo.ps1`: end-to-end Langfuse feature demo
+
+## About Each File
+
+### Root project files
+
+- `references/projects/multi_agent_langfuse/README.md`
+  - Project overview, setup, environment variables, and run commands.
+- `references/projects/multi_agent_langfuse/requirements.txt`
+  - Python dependencies for LangChain, LangGraph, Langfuse, and OpenAI-compatible model access.
+- `references/projects/multi_agent_langfuse/.env.example`
+  - Environment variable template for LLM endpoint/model/auth and Langfuse settings.
+- `references/projects/multi_agent_langfuse/.env`
+  - Local runtime configuration (not for source control).
+- `references/projects/multi_agent_langfuse/.gitignore`
+  - Ignore rules for venv, secrets, and generated files.
+
+### Documentation
+
+- `references/projects/multi_agent_langfuse/docs/ARCHITECTURE.md`
+  - Diagram-level explanation of agent roles, state transitions, and control flow.
+- `references/projects/multi_agent_langfuse/docs/LANGFUSE_SETUP.md`
+  - Step-by-step instructions to bring up Langfuse locally and validate connectivity.
+
+### Deployment
+
+- `references/projects/multi_agent_langfuse/deploy/langfuse/docker-compose.yml`
+  - Local Langfuse stack definition (containers/services).
+- `references/projects/multi_agent_langfuse/deploy/langfuse/.env.example`
+  - Example env variables required by the local Langfuse stack.
+- `references/projects/multi_agent_langfuse/deploy/langfuse/README.md`
+  - Commands for starting/stopping/resetting the local observability stack.
+
+### Source code (`src/`)
+
+- `references/projects/multi_agent_langfuse/src/config.py`
+  - Loads and validates app config from environment variables.
+- `references/projects/multi_agent_langfuse/src/state.py`
+  - Defines shared workflow state passed across graph nodes.
+- `references/projects/multi_agent_langfuse/src/llm_factory.py`
+  - Creates the chat model client (`ChatOpenAI`) using endpoint URL + model from config.
+- `references/projects/multi_agent_langfuse/src/prompting.py`
+  - Resolves prompts from Langfuse managed prompts, with local fallback prompt templates.
+- `references/projects/multi_agent_langfuse/src/graph.py`
+  - Builds and compiles the LangGraph workflow and node routing logic.
+- `references/projects/multi_agent_langfuse/src/run.py`
+  - Main CLI for single execution; initializes callbacks, runs workflow, records trace metadata/scores/events.
+- `references/projects/multi_agent_langfuse/src/multi_run.py`
+  - Batch runner to generate many traces/sessions for testing and dashboard demos.
+- `references/projects/multi_agent_langfuse/src/langfuse_ops.py`
+  - Utility CLI for Langfuse prompt CRUD and dataset seeding operations.
+
+### Agent node files (`src/agents/`)
+
+- `references/projects/multi_agent_langfuse/src/agents/supervisor.py`
+  - Chooses which specialist agent runs next based on current state.
+- `references/projects/multi_agent_langfuse/src/agents/researcher.py`
+  - Produces research notes and evidence inputs for downstream steps.
+- `references/projects/multi_agent_langfuse/src/agents/analyst.py`
+  - Converts research into structured analysis and key points.
+- `references/projects/multi_agent_langfuse/src/agents/writer.py`
+  - Drafts user-facing output from analysis and task context.
+- `references/projects/multi_agent_langfuse/src/agents/reviewer.py`
+  - Reviews draft quality and sets approval/feedback signals.
+- `references/projects/multi_agent_langfuse/src/agents/__init__.py`
+  - Package marker/import convenience.
+
+### Tool helpers (`src/tools/`)
+
+- `references/projects/multi_agent_langfuse/src/tools/mock_tools.py`
+  - Mock/helper tools used by agents in this reference implementation.
+- `references/projects/multi_agent_langfuse/src/tools/__init__.py`
+  - Package marker/import convenience.
+
+### Example scripts
+
+- `references/projects/multi_agent_langfuse/examples/run_demo.ps1`
+  - Example single-run PowerShell command wrapper.
+- `references/projects/multi_agent_langfuse/examples/run_multiple.ps1`
+  - Example batch execution script for generating multiple runs.
+- `references/projects/multi_agent_langfuse/examples/langfuse_feature_demo.ps1`
+  - Scripted demo covering prompts, runs, datasets, and tracing features end to end.
 
 ## Python Version
 
@@ -75,8 +167,9 @@ Open `http://localhost:3000`, create a project, and generate API keys.
 Then fill workspace `.env`:
 
 ```env
-GROQ_API_KEY=...
-GROQ_MODEL=llama-3.1-8b-instant
+LLM_API_KEY=...
+LLM_MODEL=gpt-4o-mini
+LLM_ENDPOINT_URL=https://api.openai.com/v1
 LANGFUSE_PUBLIC_KEY=...
 LANGFUSE_SECRET_KEY=...
 LANGFUSE_HOST=http://localhost:3000
@@ -97,6 +190,9 @@ PROMPT_NAME_REVIEWER=poc-reviewer-prompt
 
 ### Detailed Env Explanation
 
+- `LLM_API_KEY`: API key for your OpenAI-compatible provider.
+- `LLM_MODEL`: model name exposed by your provider endpoint.
+- `LLM_ENDPOINT_URL`: base URL for your OpenAI-compatible GenAI endpoint (for example `https://api.openai.com/v1`).
 - `LANGFUSE_HOST`: local Langfuse base URL.
 - `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`: project API keys from local Langfuse UI.
 - `LANGFUSE_AUTO_SESSION_ID`: when `true`, `run.py` auto-creates session IDs if you do not pass `--session-id`.
@@ -196,5 +292,5 @@ powershell -ExecutionPolicy Bypass -File references\projects\multi_agent_langfus
 ## Notes
 
 - This project is local-first for Langfuse and does not require Langfuse Cloud.
-- LLM inference is through Groq via `langchain-groq`.
+- LLM inference is through `langchain-openai` with configurable endpoint URL.
 - For production, replace mock tools and add persistent workflow checkpointing.
